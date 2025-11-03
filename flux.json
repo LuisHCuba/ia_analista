@@ -1,0 +1,261 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "app",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          544,
+          64
+        ],
+        "id": "3c9c8d79-a58c-42dd-a4e2-d43b253aa302",
+        "name": "Webhook",
+        "webhookId": "9ed4d160-3dcf-4791-acc8-b9cd05dc5e44"
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $json.body;\n\nlet allFiles = [];\nif (data.data && Array.isArray(data.data)) {\n  allFiles = data.data;\n}\n\nreturn allFiles.map((file, index) => ({\n  fileIndex: index,\n  filename: file.filename,\n  content: file.content\n}));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          752,
+          64
+        ],
+        "id": "12012ad3-7154-459a-906b-b3422f4cdea6",
+        "name": "Split Files"
+      },
+      {
+        "parameters": {
+          "jsCode": "// EXTRAIR AMOSTRA PARA IA\nconst content = $json.content;\nlet sample = [];\n\nif (content.data) {\n  const firstKey = Object.keys(content.data)[0];\n  const allData = content.data[firstKey];\n  if (Array.isArray(allData)) {\n    sample = allData.slice(0, 10);\n  }\n} else if (content.exampleData) {\n  const firstKey = Object.keys(content.exampleData)[0];\n  const allData = content.exampleData[firstKey];\n  if (Array.isArray(allData)) {\n    sample = allData.slice(0, 10);\n  }\n}\n\nreturn {\n  fileIndex: $json.fileIndex,\n  filename: $json.filename,\n  name: content.name,\n  kind: content.kind,\n  description: content.description,\n  xField: content.xField,\n  yField: content.yField,\n  colors: content.colors,\n  sample: sample\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          944,
+          64
+        ],
+        "id": "3353f1c3-98d8-496c-86c6-7bab7243fddd",
+        "name": "Extract Sample"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Você recebe AMOSTRA de dados. Gere HTML que vai buscar dados completos da variável allData.\n\nARQUIVO: {{ $json.filename }}\nNOME: {{ $json.name }}\nTIPO: {{ $json.kind }}\nCAMPOS: x={{ $json.xField }}, y={{ $json.yField }}\nAMOSTRA (10 itens): {{ JSON.stringify($json.sample) }}\nÍNDICE DO ARQUIVO: {{ $json.fileIndex }}\n\nGere HTML que:\n1. Usa dados da variável global: window.allData[{{ $json.fileIndex }}]\n2. Extrai labels e valores dos dados completos\n3. Cria gráfico Chart.js\n\nFORMATO:\n\n<div class=\"chart-card\" style=\"background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);\">\n  <h2 style=\"color: #333; font-size: 1.5rem;\">{{ $json.name }}</h2>\n  <p style=\"color: #666; font-size: 0.95rem;\">{{ $json.description }}</p>\n  <canvas id=\"chart-{{ $json.fileIndex }}\" style=\"max-height: 350px;\"></canvas>\n  <script>\n    (function() {\n      const fileData = window.allData[{{ $json.fileIndex }}];\n      const firstKey = Object.keys(fileData.data)[0];\n      const allData = fileData.data[firstKey];\n      \n      let labels = [];\n      let values = [];\n      \n      // Extrair baseado na estrutura\n      if (allData[0].columns) {\n        labels = allData.map(row => row.columns.find(c => c.field === 'keyword').value);\n        values = allData.map(row => row.columns.find(c => c.field === 'position').value);\n      } else {\n        labels = allData.map(i => i['{{ $json.xField }}']);\n        values = allData.map(i => i['{{ $json.yField }}']);\n      }\n      \n      const ctx = document.getElementById('chart-{{ $json.fileIndex }}').getContext('2d');\n      new Chart(ctx, {\n        type: '{{ $json.kind === 'area' || $json.kind === 'line' ? 'line' : ($json.kind === 'bar' ? 'bar' : 'pie') }}',\n        data: {\n          labels: labels,\n          datasets: [{label: '{{ $json.name }}', data: values}]\n        }\n      });\n    })();\n  </script>\n</div>\n\nRETORNE APENAS HTML SEM markdown",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          1152,
+          64
+        ],
+        "id": "0712e2a8-022a-4329-9e9a-5c87c1db5071",
+        "name": "IA: Generate HTML"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "htmlSections",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          1424,
+          64
+        ],
+        "id": "d84901ba-d919-4b98-bcc9-5e465b9a6281",
+        "name": "Aggregate HTML"
+      },
+      {
+        "parameters": {
+          "jsCode": "// PEGAR DADOS COMPLETOS DO WEBHOOK E PROCESSAR\nconst webhookData = $('Webhook').first().json.body.data;\n\nconst charts = webhookData.map((file, index) => {\n  const content = file.content;\n  const name = content.name || file.filename;\n  const description = content.description || '';\n  \n  let data = [];\n  let chartType = 'bar';\n  \n  // Extrair dados baseado na estrutura\n  if (content.data) {\n    const firstKey = Object.keys(content.data)[0];\n    const allData = content.data[firstKey];\n    \n    if (Array.isArray(allData) && allData.length > 0) {\n      // Dados com columns (tabelas)\n      if (allData[0].columns) {\n        // Para tabelas de métricas (installs, uninstalls, etc)\n        if (allData[0].columns.find(c => c.field === 'installs' || c.field === 'uninstalls')) {\n          data = allData[0].columns\n            .filter(col => col.value !== null && col.value !== undefined)\n            .map(col => ({\n              name: col.field === 'installs' ? 'Instalações' :\n                    col.field === 'uninstalls' ? 'Desinstalações' :\n                    col.field === 'dau' ? 'DAU' :\n                    col.field === 'account_opening' ? 'Abertura de Contas' : col.field,\n              value: Number(col.value)\n            }));\n          chartType = 'pie';\n        }\n        // Para tabelas de keywords/items\n        else {\n          data = allData.slice(0, 20).map(row => ({\n            name: row.columns.find(c => c.field === 'keyword' || c.field === 'title')?.value || 'Item',\n            value: Number(row.columns.find(c => c.field === 'position' || c.field === 'total')?.value || 0)\n          }));\n          chartType = 'bar';\n        }\n      }\n      // Dados simples (gráficos temporais)\n      else {\n        const xField = content.xField || 'createdAt';\n        const yField = content.yField || 'value';\n        data = allData.slice(0, 50).map(i => ({\n          name: String(i[xField] || '').substring(0, 10),\n          value: Number(i[yField] || i.value || i.total || 0)\n        }));\n        chartType = content.kind === 'area' || content.kind === 'line' ? 'line' : 'bar';\n      }\n    }\n  }\n  \n  return {\n    title: name,\n    description: description.substring(0, 150),\n    type: chartType,\n    data: data.filter(d => d.value && !isNaN(d.value))\n  };\n});\n\nreturn { charts: charts.filter(c => c.data.length > 0) };"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1552,
+          64
+        ],
+        "id": "eae592c4-1742-4596-a32e-fdcbc4a43856",
+        "name": "Build Dashboard"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Analise os dados e faça uma análise descritiva executiva.\n\nDADOS RECEBIDOS: {{ JSON.stringify($json.charts) }}\n\nFaça uma análise objetiva e descritiva:\n\n- Resuma os principais indicadores\n- Identifique tendências\n- Aponte pontos de atenção\n- Dê insights acionáveis\n\nRETORNE JSON:\n\n{\n  \"summary\": \"Resumo executivo dos dados\",\n  \"insights\": [\"Insight 1\", \"Insight 2\", \"Insight 3\"],\n  \"alerts\": [\"Alerta 1\", \"Alerta 2\"]\n}\n\nRetorne APENAS JSON sem markdown",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2.2,
+        "position": [
+          1744,
+          64
+        ],
+        "id": "0095880f-a199-4f91-8aea-7f83c17bf721",
+        "name": "IA: Analysis"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Pegar charts do Build Dashboard (node anterior à IA)\nconst buildOutput = $('Build Dashboard').first().json;\nconst charts = buildOutput.charts || [];\n\n// Pegar análise da IA\nconst aiAnalysis = $json.output;\n\nlet analysis = {};\nif (typeof aiAnalysis === 'string') {\n  const match = aiAnalysis.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    try { analysis = JSON.parse(match[0]); } catch(e) {}\n  }\n} else {\n  analysis = aiAnalysis;\n}\n\nreturn {\n  charts: charts,\n  analysis: analysis\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2032,
+          64
+        ],
+        "id": "07b27a59-8ab7-408f-8068-bb8541018d36",
+        "name": "Merge Analysis"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          2208,
+          64
+        ],
+        "id": "3f655461-a2af-4cd5-81af-20c95e7f04bf",
+        "name": "Respond to Webhook"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1,
+        "position": [
+          1488,
+          400
+        ],
+        "id": "09be2ff0-936d-48dc-85b0-7c78f6a71a43",
+        "name": "Google Gemini Chat Model",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "COA9dcSuOxCSOEW4",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Split Files",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Files": {
+        "main": [
+          [
+            {
+              "node": "Extract Sample",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Sample": {
+        "main": [
+          [
+            {
+              "node": "IA: Generate HTML",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IA: Generate HTML": {
+        "main": [
+          [
+            {
+              "node": "Aggregate HTML",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate HTML": {
+        "main": [
+          [
+            {
+              "node": "Build Dashboard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Dashboard": {
+        "main": [
+          [
+            {
+              "node": "IA: Analysis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IA: Analysis": {
+        "main": [
+          [
+            {
+              "node": "Merge Analysis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Analysis": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "IA: Generate HTML",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "IA: Analysis",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "9a90773b9ca56f994bb0bbae03d33c5fad24ac8e6dde9347f6ea48a8f9ac20d0"
+    }
+  }
