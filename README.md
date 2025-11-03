@@ -1,152 +1,85 @@
-# 📊 Dashboard Inteligente de Análise de Métricas
+# 📊 Dashboard Inteligente - Case Rank My App
 
-> Painel automatizado com IA para análise de dados de aplicativos móveis
+> Sistema automatizado de análise de métricas com IA
 
 ![React](https://img.shields.io/badge/React-18.2-61dafb?style=flat&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178c6?style=flat&logo=typescript)
 ![N8N](https://img.shields.io/badge/N8N-Workflow-ff6d5a?style=flat)
-![Google Gemini](https://img.shields.io/badge/IA-Google%20Gemini-4285f4?style=flat)
+![Gemini](https://img.shields.io/badge/IA-Google%20Gemini-4285f4?style=flat)
 
 ---
 
-## 🎯 **Visão Geral**
+## 🎯 **O Que Faz**
 
-Sistema completo de análise automatizada que transforma dados brutos de métricas de aplicativos em **visualizações dinâmicas** e **insights acionáveis** gerados por IA.
-
-### **Funcionalidades Principais:**
-
-✅ **Upload Múltiplo** - Processa vários arquivos JSON simultaneamente  
-✅ **Visualizações Automáticas** - Gera gráficos adaptados aos dados  
-✅ **Análise de IA** - Google Gemini gera insights executivos  
-✅ **Interface Profissional** - Modo dark com animações  
-✅ **Processamento Otimizado** - IA rápida e eficiente  
+Painel que recebe arquivos JSON com métricas de apps e gera automaticamente:
+- 📊 **Gráficos interativos** (pizza, barras, linhas)
+- 🤖 **Análise executiva por IA** (insights + alertas)
+- ⏱️ **Processamento em tempo real** (1-2min para 10 arquivos)
 
 ---
 
-## 🚀 **Início Rápido**
+## 🚀 **Acesso Rápido**
 
+### **🌐 Versão Online (Deploy Netlify):**
+**[https://analistarank.netlify.app](https://analistarank.netlify.app)**
+
+### **💻 Rodar Localmente:**
 ```bash
-# 1. Instale dependências
 npm install
-
-# 2. Inicie o servidor
 npm run dev
-
-# 3. Acesse
-http://localhost:5173
+# Acesse: http://localhost:5173
 ```
-
-📘 **Primeira vez?** Veja o [Manual de Instalação Completo](MANUAL_INSTALACAO.md)
-
----
-
-## 📸 **Como Funciona**
-
-1. **📁 Upload** - Carregue arquivos JSON com métricas
-2. **🤖 Processamento** - N8N + Google Gemini analisam dados
-3. **📊 Visualização** - Gráficos interativos são gerados
-4. **💡 Insights** - IA apresenta análise executiva
-
----
-
-## 🛠️ **Stack Tecnológica**
-
-### **Frontend:**
-- **React 18** + TypeScript
-- **Recharts** - Gráficos nativos
-- **Vite** - Build tool
-
-### **Backend/Automação:**
-- **N8N** - Orquestração de workflow
-- **Google Gemini** - Inteligência Artificial
 
 ---
 
 ## 📖 **Documentação**
 
-- 📘 **[Manual de Instalação](MANUAL_INSTALACAO.md)** - Guia passo a passo completo
-- 🏗️ **[Arquitetura](ARQUITETURA.md)** - Decisões técnicas e fluxo
-- 🎬 **[Guia de Apresentação](APRESENTACAO.md)** - Roteiro para demo
+1. **[⚙️ Configurar N8N](SETUP_N8N.md)** - Importar workflow (2 minutos)
+2. **[💻 Instalar Projeto](SETUP_APP.md)** - Rodar local ou deploy (5 minutos)
+3. **[🏗️ Arquitetura](ARQUITETURA.md)** - Como funciona tecnicamente
 
 ---
 
-## 🎨 **Recursos**
+## 🎬 **Como Usar**
 
-### **Interface:**
-- 🌙 Modo dark profissional
-- 🤖 Animação de loading com robô
-- ⏱️ Timer em tempo real
-- 🔊 Notificação sonora de sucesso
-- 📱 Design responsivo
-
-### **Visualizações:**
-- 🥧 Gráficos de pizza com % e valores
-- 📊 Gráficos de barras com rótulos
-- 📈 Gráficos de linha com pontos
-- 🎨 7 cores automáticas
-- 🖱️ Tooltips interativos
-
-### **Análise de IA:**
-- 📋 Resumo executivo
-- 💡 Insights acionáveis
-- ⚠️ Alertas críticos
-- 🎯 Linguagem clara
+1. **Acesse** o painel (online ou local)
+2. **Configure webhook** N8N (botão ⚙️)
+3. **Faça upload** de arquivos JSON
+4. **Clique** "🚀 Gerar Dashboard"
+5. **Aguarde** análise da IA (popup com robô)
+6. **Visualize** gráficos + insights
 
 ---
 
-## 🔧 **Configuração**
+## 🛠️ **Stack**
 
-### **Webhook N8N:**
-1. Clique no botão ⚙️ (topo direito)
-2. Configure URL: `/api` ou `https://seu-n8n.com/webhook/app`
-3. Salve
+- **Frontend:** React + TypeScript + Recharts
+- **Backend:** N8N + Google Gemini
+- **Deploy:** Netlify (frontend) + N8N Cloud
 
 ---
 
-## 📦 **Scripts**
+## 📦 **Estrutura**
 
-```bash
-npm run dev      # Desenvolvimento (localhost:5173)
-npm run build    # Build de produção
-npm run preview  # Preview da build
+```
+├── src/              # Código React (3 arquivos)
+├── public/           # Assets (GIF)
+├── flux.json         # Workflow N8N
+├── README.md         # Este arquivo
+├── SETUP_N8N.md      # Config N8N
+└── SETUP_APP.md      # Install App
 ```
 
 ---
 
-## 🐛 **Troubleshooting**
+## 🏆 **Case Técnico**
 
-**Gráficos não aparecem?**
-- Verifique Console (F12) para erros
-- Confirme que N8N retorna JSON correto
+Desenvolvido para demonstrar automação No/Low Code com IA.
 
-**Erro de CORS?**
-- Use `/api` como URL (proxy configurado)
-
-**IA demorando?**
-- Normal: 1-2min para ~10 arquivos
-- Veja logs do N8N
+**Autor:** Luis Cuba  
+**Data:** Novembro 2025  
+**Status:** ✅ Completo e Funcionando
 
 ---
 
-## 🏆 **Case Técnico - Rank My App**
-
-Desenvolvido para demonstrar habilidades em:
-- Automação No/Low Code
-- Integração de IA
-- Desenvolvimento Full Stack
-- Arquitetura de Soluções
-
-**Desenvolvido por:** Luis Cuba  
-**Data:** Novembro 2025
-
----
-
-## 📧 **Contato**
-
-Para dúvidas sobre o projeto: produto@rankmyapp.com.br
-
----
-
-## 📄 **Licença**
-
-Projeto desenvolvido exclusivamente para processo seletivo da Rank My App.
+⭐ **[Ver projeto no GitHub](https://github.com/LuisHCuba/ia_analista)**
