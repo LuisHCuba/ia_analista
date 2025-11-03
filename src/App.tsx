@@ -61,9 +61,7 @@ function App() {
 
     // Timer para mostrar tempo decorrido
     const startTime = Date.now()
-    let timer: NodeJS.Timeout | null = null
-    
-    timer = setInterval(() => {
+    const timer = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
     }, 1000)
 
@@ -120,7 +118,7 @@ function App() {
     } catch (error: any) {
       setMessage(`❌ Erro: ${error.message}`)
     } finally {
-      if (timer) clearInterval(timer)
+      clearInterval(timer)
       setLoading(false)
     }
   }
