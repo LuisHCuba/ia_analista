@@ -21,7 +21,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [showConfig, setShowConfig] = useState(false)
-  const [webhookUrl, setWebhookUrl] = useState('/api')
+  const [webhookUrl, setWebhookUrl] = useState('')
   const [elapsedTime, setElapsedTime] = useState(0)
 
   useEffect(() => {
@@ -52,6 +52,12 @@ function App() {
   const handleAnalyze = async () => {
     if (files.length === 0) {
       setMessage('❌ Carregue arquivos JSON primeiro')
+      return
+    }
+
+    // Verificar se webhook está configurado - BLOQUEIA com modal
+    if (!webhookUrl || webhookUrl.trim() === '') {
+      setShowConfig(true) // Abre modal bloqueante
       return
     }
 
@@ -183,18 +189,115 @@ function App() {
       </div>
 
       {showConfig && (
-        <div style={{ background: '#232a38', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #2d3548' }}>
-          <h3 style={{ color: '#e1e8f0' }}>⚙️ Configuração</h3>
-          <input
-            type="text"
-            value={webhookUrl}
-            onChange={(e) => setWebhookUrl(e.target.value)}
-            placeholder="/api"
-            style={{ width: '100%', padding: '12px', marginTop: '10px', marginBottom: '10px', borderRadius: '8px', border: '2px solid #ddd' }}
-          />
-          <button onClick={() => { localStorage.setItem('webhookUrl', webhookUrl); setShowConfig(false); setMessage('✅ Salvo!') }} style={{ marginTop: 0 }}>
-            💾 Salvar
-          </button>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 20, 25, 0.98)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'fadeIn 0.3s ease-in'
+        }}>
+          <div style={{
+            background: '#1a1f2e',
+            padding: '50px 40px',
+            borderRadius: '20px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+            border: '3px solid #ff9f40',
+            maxWidth: '550px',
+            width: '90%',
+            animation: 'shake 0.5s',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowConfig(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: '#3a4556',
+                border: 'none',
+                borderRadius: '50%',
+                width: '35px',
+                height: '35px',
+                fontSize: '20px',
+                color: '#e1e8f0',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                marginTop: 0
+              }}
+              title="Fechar"
+            >
+              ✕
+            </button>
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <div style={{ fontSize: '70px', marginBottom: '20px' }}>⚠️</div>
+              <h2 style={{ color: '#ff9f40', marginBottom: '12px', fontSize: '26px', fontWeight: 700 }}>
+                Configuração Obrigatória
+              </h2>
+              <p style={{ color: '#8b95a5', fontSize: '15px', lineHeight: '1.5' }}>
+                Configure o Webhook do N8N para processar seus dados com IA
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, color: '#e1e8f0', fontSize: '15px' }}>
+                📡 URL do Webhook N8N:
+              </label>
+              <input
+                type="text"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://seu-n8n.com/webhook/app ou /api"
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  border: '2px solid #2d3548',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  background: '#0f1419',
+                  color: '#e1e8f0',
+                  outline: 'none',
+                  transition: 'border-color 0.3s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#4a9eff'}
+                onBlur={(e) => e.target.style.borderColor = '#2d3548'}
+              />
+            </div>
+
+            <button 
+              onClick={() => { 
+                if (webhookUrl.trim()) {
+                  localStorage.setItem('webhookUrl', webhookUrl)
+                  setShowConfig(false)
+                  setMessage('✅ Webhook configurado com sucesso!')
+                } else {
+                  setMessage('⚠️ Digite uma URL válida!')
+                }
+              }}
+              disabled={!webhookUrl.trim()}
+              style={{ 
+                width: '100%', 
+                marginTop: 0,
+                padding: '18px',
+                fontSize: '17px',
+                fontWeight: 700,
+                opacity: webhookUrl.trim() ? 1 : 0.5,
+                cursor: webhookUrl.trim() ? 'pointer' : 'not-allowed'
+              }}
+            >
+              ✅ Salvar e Continuar
+            </button>
+          </div>
         </div>
       )}
 
@@ -374,6 +477,11 @@ function App() {
             @keyframes pulse {
               0%, 100% { opacity: 1; }
               50% { opacity: 0.6; }
+            }
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              25% { transform: translateX(-10px); }
+              75% { transform: translateX(10px); }
             }
           `}</style>
           </div>
